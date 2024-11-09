@@ -28,6 +28,8 @@ func (l *Lexer) readChar() {
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+	l.skipWhitespaces()
+
 	switch l.currentValue {
 	case '+':
 		tok = newToken(token.PLUS, l.currentValue)
@@ -49,8 +51,17 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Type = token.EOF
 		tok.Literal = ""
 	default:
-		tok.Type = token.ILLEGAL
-		tok.Literal = ""
+		if isLetter(l.currentValue) {
+			tok.Literal = l.readIndentifier()
+			tok.Type = token.LookUpIdent(tok.Literal)
+			return tok
+		} else if isNumber(l.currentValue) {
+			tok.Literal = l.readNumber()
+			tok.Type = token.LookUpNumberType(tok.Literal)
+			return tok
+		} else {
+			tok = newToken(token.ILLEGAL, l.currentValue)
+		}
 	}
 	l.readChar()
 	return tok
@@ -58,4 +69,44 @@ func (l *Lexer) NextToken() token.Token {
 
 func newToken(tokenType token.TokenType, char byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(char)}
+}
+
+func (l *Lexer) readIndentifier() string {
+	var initialPosition = l.position
+	for isLetter(l.currentValue) {
+		l.readChar()
+	}
+	return l.input[initialPosition:l.position]
+}
+
+func (l *Lexer) readNumber() string {
+	var initialPosition = l.position
+	var isFloatNumber = false
+	for isNumber(l.currentValue) {
+		l.readChar()
+	}
+	if l.currentValue == '.' {
+		isFloatNumber = true
+		l.readChar()
+	}
+	if isFloatNumber {
+		for isNumber(l.currentValue) {
+			l.readChar()
+		}
+	}
+	return l.input[initialPosition:l.position]
+}
+
+func isLetter(ch byte) bool {
+	return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_'
+}
+
+func isNumber(ch byte) bool {
+	return ch >= '0' && ch <= '9'
+}
+
+func (l *Lexer) skipWhitespaces() {
+	for l.currentValue == ' ' || l.currentValue == '\n' || l.currentValue == '\t' || l.currentValue == '\r' {
+		l.readChar()
+	}
 }

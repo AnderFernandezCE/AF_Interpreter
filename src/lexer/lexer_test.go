@@ -6,19 +6,51 @@ import (
 )
 
 func TestTokens(t *testing.T) {
-	input := "=+(){},;"
+	input := `let numVariable = 5.6;
+	let otherVariable = 10;
+
+	fn addFn (x, y){
+		x + y;
+	}
+	let result = addFn(numVariable, otherVariable);
+	`
 
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
+		{token.LET, "let"},
+		{token.IDENT, "numVariable"},
 		{token.ASSIGN, "="},
-		{token.PLUS, "+"},
+		{token.FLOAT, "5.6"},
+		{token.SEMICOLON, ";"},
+		{token.LET, "let"},
+		{token.IDENT, "otherVariable"},
+		{token.ASSIGN, "="},
+		{token.INT, "10"},
+		{token.SEMICOLON, ";"},
+		{token.FUNCTION, "fn"},
+		{token.IDENT, "addFn"},
 		{token.LPAREN, "("},
+		{token.IDENT, "x"},
+		{token.COMMA, ","},
+		{token.IDENT, "y"},
 		{token.RPAREN, ")"},
 		{token.LBRACE, "{"},
+		{token.IDENT, "x"},
+		{token.PLUS, "+"},
+		{token.IDENT, "y"},
+		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
+		{token.LET, "let"},
+		{token.IDENT, "result"},
+		{token.ASSIGN, "="},
+		{token.IDENT, "addFn"},
+		{token.LPAREN, "("},
+		{token.IDENT, "numVariable"},
 		{token.COMMA, ","},
+		{token.IDENT, "otherVariable"},
+		{token.RPAREN, ")"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}

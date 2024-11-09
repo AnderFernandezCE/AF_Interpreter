@@ -1,6 +1,27 @@
 package token
 
+import "strings"
+
 type TokenType string
+
+var keywords = map[string]TokenType{
+	"fn":  FUNCTION,
+	"let": LET,
+}
+
+func LookUpIdent(ident string) TokenType {
+	if tokenType, ok := keywords[ident]; ok {
+		return tokenType
+	}
+	return IDENT
+}
+
+func LookUpNumberType(ident string) TokenType {
+	if strings.Contains(ident, ".") {
+		return FLOAT
+	}
+	return INT
+}
 
 const (
 	EOF     = "EOF"
@@ -21,6 +42,7 @@ const (
 	// Delimeters
 	COMMA     = ","
 	SEMICOLON = ";"
+	DOT       = "."
 
 	LPAREN = "("
 	RPAREN = ")"
