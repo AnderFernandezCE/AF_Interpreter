@@ -46,7 +46,34 @@ func (l *Lexer) NextToken() token.Token {
 	case ';':
 		tok = newToken(token.SEMICOLON, l.currentValue)
 	case '=':
-		tok = newToken(token.ASSIGN, l.currentValue)
+		if l.peekChar() == '=' {
+			current := l.currentValue
+			l.readChar()
+			literal := string(current) + string(l.currentValue)
+			tok = token.Token{Type: token.EQUAL, Literal: literal}
+		} else {
+			tok = newToken(token.ASSIGN, l.currentValue)
+		}
+	case '!':
+		if l.peekChar() == '=' {
+			current := l.currentValue
+			l.readChar()
+			literal := string(current) + string(l.currentValue)
+			tok = token.Token{Type: token.NOT_EQUAL, Literal: literal}
+		} else {
+			tok = newToken(token.BANG, l.currentValue)
+		}
+	case '-':
+		tok = newToken(token.MINUS, l.currentValue)
+	case '/':
+		tok = newToken(token.SLASH, l.currentValue)
+	case '*':
+		tok = newToken(token.ASTERISK, l.currentValue)
+	case '<':
+		tok = newToken(token.LT, l.currentValue)
+	case '>':
+		tok = newToken(token.GT, l.currentValue)
+
 	case 0:
 		tok.Type = token.EOF
 		tok.Literal = ""
@@ -69,6 +96,15 @@ func (l *Lexer) NextToken() token.Token {
 
 func newToken(tokenType token.TokenType, char byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(char)}
+}
+
+// returns next char without advancing position
+func (l *Lexer) peekChar() byte {
+	if l.nextPosition >= len(l.input) {
+		return 0
+	} else {
+		return l.input[l.nextPosition]
+	}
 }
 
 func (l *Lexer) readIndentifier() string {
