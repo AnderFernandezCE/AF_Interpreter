@@ -17,6 +17,7 @@ func TestLetStatements(t *testing.T) {
 	p := NewParser(l)
 
 	program := p.ParseProgram()
+	checkParserErrors(t, p)
 
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nill")
@@ -31,7 +32,7 @@ func TestLetStatements(t *testing.T) {
 	}{
 		{expectedIdentifier: "x"},
 		{expectedIdentifier: "y"},
-		{expectedIdentifier: "foobar"},
+		{expectedIdentifier: "foo"},
 	}
 	for i, test := range tests {
 		stmt := program.Statements[i]
@@ -41,6 +42,18 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func checkParserErrors(t *testing.T, p *Parser) {
+	errors := p.GetErrors()
+	if len(errors) == 0 {
+		return
+	}
+
+	t.Errorf("parser has %d errors", len(errors))
+	for _, errorMsg := range errors {
+		t.Errorf("Parser error: %q", errorMsg)
+	}
+	t.FailNow()
+}
 func testLetStatements(t *testing.T, s ast.Statement, expected string) bool {
 	if s.TokenLiteral() != "let" {
 		t.Errorf("Expected 'let', got %q", s.TokenLiteral())
