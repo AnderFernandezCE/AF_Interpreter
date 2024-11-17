@@ -7,11 +7,29 @@ import (
 	"fmt"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUAL       // ==
+	LESSGREATER // < > <= >=
+	SUM         // + -
+	PRODUCT     // * /
+	PREFIX      // !true -5
+	CALL        // add()
+)
+
+type (
+	prefixParseFN = func() ast.Expression
+	infixParseFN  = func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
-	l         *lexer.Lexer
-	curToken  token.Token
-	peekToken token.Token
-	errors    []string
+	l               *lexer.Lexer
+	curToken        token.Token
+	peekToken       token.Token
+	errors          []string
+	prefixParserFns map[token.TokenType]prefixParseFN
+	infixParserFns  map[token.TokenType]infixParseFN
 }
 
 func NewParser(l *lexer.Lexer) *Parser {
@@ -20,6 +38,9 @@ func NewParser(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
+	parser.prefixParserFns = make(map[token.TokenType]prefixParseFN)
+	parser.infixParserFns = make(map[token.TokenType]infixParseFN)
+	parser.prefixParserFns[token.INT] = parser.parseIdentifier
 	// calling twice to set curToken and peekToken
 	parser.nextToken()
 	parser.nextToken()
@@ -62,11 +83,11 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
-func (p *Parser) parseLetStatement() ast.Statement {
+func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
 	if !p.expectPeek(token.IDENT) {
 		return nil
@@ -85,7 +106,7 @@ func (p *Parser) parseLetStatement() ast.Statement {
 	return stmt
 }
 
-func (p *Parser) parseReturnStatement() ast.Statement {
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 	p.nextToken()
 
@@ -94,6 +115,30 @@ func (p *Parser) parseReturnStatement() ast.Statement {
 		p.nextToken()
 	}
 	return stmt
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	stmt.Expression = p.parseExpression(LOWEST) // precedence will be used to evaluate correctly expressions
+	// useful for REPL to evaluate  for example 5+5 without semicolon
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParserFns[p.curToken.Type]
+	if prefix == nil {
+		// TODO: register illegal token
+		return nil
+	}
+	expression := prefix()
+
+	return expression
+}
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 // checks next token and advances one token, will be useful for handling errors

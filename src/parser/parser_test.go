@@ -108,3 +108,76 @@ func TestReturnStatements(t *testing.T) {
 		}
 	}
 }
+
+func TestParseIdentifiersExpressions(t *testing.T) {
+	input := `foobar;
+	hello;
+	world;`
+	lexer := lexer.NewLexer(input)
+	parser := NewParser(lexer)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	tests := []struct {
+		identifierName string
+	}{
+		{identifierName: "foobar"},
+		{identifierName: "hello"},
+		{identifierName: "world"},
+	}
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nill")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not have 3 statementes, got %d", len(program.Statements))
+	}
+
+	for i, test := range tests {
+		identStmt, ok := program.Statements[i].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ExpressionStatement. got=%T", identStmt)
+			continue
+		}
+		if identStmt.TokenLiteral() != test.identifierName {
+			t.Errorf("returnStmt.TokenLiteral not '%q', got %q",
+				test.identifierName, identStmt.TokenLiteral())
+		}
+	}
+}
+
+// TODO: print program statements as text
+// requires: parsing expression
+func TestPrintAsStringStatements(t *testing.T) {
+	input := `
+	return 5;
+	return 10.5;
+	return "hello";
+	`
+	lexer := lexer.NewLexer(input)
+	parser := NewParser(lexer)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nill")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not have 3 statementes, got %d", len(program.Statements))
+	}
+
+	for _, stmt := range program.Statements {
+		returnStmt, ok := stmt.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ReturnStatement. got=%T", stmt)
+			continue
+		}
+		if returnStmt.TokenLiteral() != "return" {
+			t.Errorf("returnStmt.TokenLiteral not 'return', got %q",
+				returnStmt.TokenLiteral())
+		}
+	}
+}
