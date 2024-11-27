@@ -126,3 +126,7 @@ func (il *IntegerLiteral) TokenLiteral() string {
 }
 
 func (il *IntegerLiteral) expressionNode() {}
+
+func (il *IntegerLiteral) PrintAsString() string {
+	return il.Token.Literal
+}

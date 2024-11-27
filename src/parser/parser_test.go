@@ -147,6 +147,56 @@ func TestParseIdentifiersExpressions(t *testing.T) {
 	}
 }
 
+func TestParseIntExpressions(t *testing.T) {
+	input := `5;
+	10;
+	15;`
+	lexer := lexer.NewLexer(input)
+	parser := NewParser(lexer)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	tests := []struct {
+		integerValue   int64
+		integerLiteral string
+	}{
+		{integerValue: 5, integerLiteral: "5"},
+		{integerValue: 10, integerLiteral: "10"},
+		{integerValue: 15, integerLiteral: "15"},
+	}
+	if program == nil {
+		t.Fatalf("ParseProgram() returned nill")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not have 3 statementes, got %d", len(program.Statements))
+	}
+
+	for i, test := range tests {
+		identStmt, ok := program.Statements[i].(*ast.ExpressionStatement)
+		if !ok {
+			t.Errorf("stmt not *ast.ExpressionStatement. got=%T", identStmt)
+			continue
+		}
+		literal, ok := identStmt.Expression.(*ast.IntegerLiteral)
+
+		if !ok {
+			t.Fatalf("exp not *ast.IntegerLiteral. got=%T", identStmt.Expression)
+		}
+
+		if literal.TokenLiteral() != test.integerLiteral {
+			t.Errorf("literal.TokenLiteral not %s. got=%s", test.integerLiteral,
+				literal.TokenLiteral())
+		}
+
+		if literal.Value != test.integerValue {
+			t.Errorf("literal.Value not %d. got=%d", test.integerValue,
+				literal.Value)
+		}
+	}
+}
+
 // TODO: print program statements as text
 // requires: parsing expression
 func TestPrintAsStringStatements(t *testing.T) {

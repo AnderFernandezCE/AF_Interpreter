@@ -5,6 +5,7 @@ import (
 	"af/src/lexer"
 	"af/src/token"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -40,7 +41,8 @@ func NewParser(l *lexer.Lexer) *Parser {
 
 	parser.prefixParserFns = make(map[token.TokenType]prefixParseFN)
 	parser.infixParserFns = make(map[token.TokenType]infixParseFN)
-	parser.prefixParserFns[token.INT] = parser.parseIdentifier
+	parser.prefixParserFns[token.IDENT] = parser.parseIdentifier
+	parser.prefixParserFns[token.INT] = parser.parseInt
 	// calling twice to set curToken and peekToken
 	parser.nextToken()
 	parser.nextToken()
@@ -139,6 +141,19 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 }
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseInt() ast.Expression {
+	il := &ast.IntegerLiteral{Token: p.curToken}
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Could not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, errorMsg)
+		return nil
+	}
+
+	il.Value = value
+	return il
 }
 
 // checks next token and advances one token, will be useful for handling errors
