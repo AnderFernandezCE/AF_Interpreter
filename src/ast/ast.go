@@ -130,3 +130,40 @@ func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) PrintAsString() string {
 	return il.Token.Literal
 }
+
+type FloatLiteral struct {
+	Token token.Token
+	Value float64
+}
+
+func (fl *FloatLiteral) TokenLiteral() string {
+	return fl.Token.Literal
+}
+
+func (fl *FloatLiteral) expressionNode() {}
+
+func (fl *FloatLiteral) PrintAsString() string {
+	return fl.Token.Literal
+}
+
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) TokenLiteral() string {
+	return pe.Token.Literal
+}
+
+func (pe *PrefixExpression) expressionNode() {}
+
+func (pe *PrefixExpression) PrintAsString() string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.PrintAsString())
+	out.WriteString(")")
+
+	return out.String()
+}

@@ -43,6 +43,9 @@ func NewParser(l *lexer.Lexer) *Parser {
 	parser.infixParserFns = make(map[token.TokenType]infixParseFN)
 	parser.prefixParserFns[token.IDENT] = parser.parseIdentifier
 	parser.prefixParserFns[token.INT] = parser.parseInt
+	parser.prefixParserFns[token.FLOAT] = parser.parseFloat
+	parser.prefixParserFns[token.BANG] = parser.parsePrefixExpression
+	parser.prefixParserFns[token.MINUS] = parser.parsePrefixExpression
 	// calling twice to set curToken and peekToken
 	parser.nextToken()
 	parser.nextToken()
@@ -132,7 +135,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParserFns[p.curToken.Type]
 	if prefix == nil {
-		// TODO: register illegal token
+		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
 	expression := prefix()
@@ -154,6 +157,33 @@ func (p *Parser) parseInt() ast.Expression {
 
 	il.Value = value
 	return il
+}
+
+func (p *Parser) parseFloat() ast.Expression {
+	il := &ast.FloatLiteral{Token: p.curToken}
+	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Could not parse %q as float", p.curToken.Literal)
+		p.errors = append(p.errors, errorMsg)
+		return nil
+	}
+
+	il.Value = value
+	return il
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	pe := &ast.PrefixExpression{Token: p.curToken, Operator: p.curToken.Literal}
+
+	p.nextToken()
+	e := p.parseExpression(PREFIX)
+	pe.Right = e
+	return pe
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
 }
 
 // checks next token and advances one token, will be useful for handling errors
