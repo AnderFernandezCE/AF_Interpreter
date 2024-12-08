@@ -58,6 +58,8 @@ func NewParser(l *lexer.Lexer) *Parser {
 	parser.prefixParserFns[token.FLOAT] = parser.parseFloat
 	parser.prefixParserFns[token.BANG] = parser.parsePrefixExpression
 	parser.prefixParserFns[token.MINUS] = parser.parsePrefixExpression
+	parser.prefixParserFns[token.TRUE] = parser.parseBoolean
+	parser.prefixParserFns[token.FALSE] = parser.parseBoolean
 
 	parser.infixParserFns[token.PLUS] = parser.parseInfixExpression
 	parser.infixParserFns[token.MINUS] = parser.parseInfixExpression
@@ -187,6 +189,10 @@ func (p *Parser) parseInt() ast.Expression {
 
 	il.Value = value
 	return il
+}
+
+func (p *Parser) parseBoolean() ast.Expression {
+	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
 func (p *Parser) parseFloat() ast.Expression {
