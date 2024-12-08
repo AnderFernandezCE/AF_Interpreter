@@ -60,6 +60,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	parser.prefixParserFns[token.MINUS] = parser.parsePrefixExpression
 	parser.prefixParserFns[token.TRUE] = parser.parseBoolean
 	parser.prefixParserFns[token.FALSE] = parser.parseBoolean
+	parser.prefixParserFns[token.LPAREN] = parser.parseGroupedExpression
 
 	parser.infixParserFns[token.PLUS] = parser.parseInfixExpression
 	parser.infixParserFns[token.MINUS] = parser.parseInfixExpression
@@ -193,6 +194,15 @@ func (p *Parser) parseInt() ast.Expression {
 
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return exp
 }
 
 func (p *Parser) parseFloat() ast.Expression {
